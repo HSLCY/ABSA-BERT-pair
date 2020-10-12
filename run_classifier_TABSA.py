@@ -180,13 +180,20 @@ def main():
                         type=str,
                         required=True,
                         help="The output directory where the model checkpoints will be written.")
+    
+    ## Other parameters
     parser.add_argument("--init_checkpoint",
                         default=None,
                         type=str,
-                        required=True,
                         help="Initial checkpoint (usually from a pre-trained BERT model).")
-    
-    ## Other parameters
+    parser.add_argument("--init_eval_checkpoint",
+                        default=None,
+                        type=str,
+                        help="Initial checkpoint (usually from a pre-trained BERT model + classifier).")
+    parser.add_argument("--do_save_model",
+                        default=False,
+                        action='store_true',
+                        help="Whether to save model.")
     parser.add_argument("--eval_test",
                         default=False,
                         action='store_true',
@@ -342,7 +349,9 @@ def main():
 
     # model and optimizer
     model = BertForSequenceClassification(bert_config, len(label_list))
-    if args.init_checkpoint is not None:
+    if args.init_eval_checkpoint is not None:
+        model.load_state_dict(torch.load(args.init_eval_checkpoint, map_location='cpu'))
+    elif args.init_checkpoint is not None:
         model.bert.load_state_dict(torch.load(args.init_checkpoint, map_location='cpu'))
     model.to(device)
 
@@ -374,9 +383,9 @@ def main():
             writer.write("epoch\tglobal_step\tloss\n")
     
     global_step = 0
-    epoch=0
+    epoch = 0
     for _ in trange(int(args.num_train_epochs), desc="Epoch"):
-        epoch+=1
+        epoch += 1
         model.train()
         tr_loss = 0
         nb_tr_examples, nb_tr_steps = 0, 0
@@ -396,13 +405,19 @@ def main():
                 optimizer.step()    # We have accumulated enought gradients
                 model.zero_grad()
                 global_step += 1
+
+        if args.do_save_model:
+            if n_gpu > 1:
+                torch.save(model.module.state_dict(), os.path.join(args.output_dir, f'model_ep_{epoch}.bin'))
+            else:
+                torch.save(model.state_dict(), os.path.join(args.output_dir, f'model_ep_{epoch}.bin'))
         
         # eval_test
         if args.eval_test:
             model.eval()
             test_loss, test_accuracy = 0, 0
             nb_test_steps, nb_test_examples = 0, 0
-            with open(os.path.join(args.output_dir, "test_ep_"+str(epoch)+".txt"),"w") as f_test:
+            with open(os.path.join(args.output_dir, f"test_ep_{epoch}.txt"), "w") as f_test:
                 for input_ids, input_mask, segment_ids, label_ids in test_dataloader:
                     input_ids = input_ids.to(device)
                     input_mask = input_mask.to(device)
