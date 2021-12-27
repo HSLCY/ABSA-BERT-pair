@@ -1,0 +1,78 @@
+# envrc
+**/.env
+**/.envrc
+**/.env.*
+**/.env_*
+
+# redis
+dump.rdb
+
+**/.DS_STORE
+
+# virtualenv
+**/bin/**
+**/build/**
+**/lib/**
+**/include/**
+**/.venv/**
+
+# python
+**/__pycache__/**
+**.egg-info**
+
+source/**
+
+**/.eggs/**
+
+**/tmp/**
+
+**/celerybeat-schedule**
+**/celerybeat.pid**
+
+**/node_modules**
+**/*.d.ts
+**/pyvenv.cfg
+**/dist/**
+
+models/**
+
+albert/**
+**/lib64
+**/share/**
+
+**/.python-version
+**/man/**
+
+**/secrets/**
+**/build/**
+
+mlqa/**
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+**/node_modules
+**/.pnp
+**/.pnp.js
+
+# testing
+**/coverage
+
+# misc
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+**/.eslintcache
+
+# kubernetes
+kube/charts/**/values**
+
+Scripts/**
+
+libratom/**
