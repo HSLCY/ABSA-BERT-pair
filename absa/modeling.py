@@ -18,27 +18,29 @@ from torch.nn import CrossEntropyLoss
 
 def gelu(x):
     """Implementation of the gelu activation function.
-        For information: OpenAI GPT's gelu is slightly different (and gives slightly different results):
-        0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
+    For information: OpenAI GPT's gelu is slightly different (and gives slightly different results):
+    0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
     """
     return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
 
 
 class BertConfig(object):
-    """Configuration class to store the configuration of a `BertModel`.
-    """
-    def __init__(self,
-                vocab_size,
-                hidden_size=768,
-                num_hidden_layers=12,
-                num_attention_heads=12,
-                intermediate_size=3072,
-                hidden_act="gelu",
-                hidden_dropout_prob=0.1,
-                attention_probs_dropout_prob=0.1,
-                max_position_embeddings=512,
-                type_vocab_size=16,
-                initializer_range=0.02):
+    """Configuration class to store the configuration of a `BertModel`."""
+
+    def __init__(
+        self,
+        vocab_size,
+        hidden_size=768,
+        num_hidden_layers=12,
+        num_attention_heads=12,
+        intermediate_size=3072,
+        hidden_act="gelu",
+        hidden_dropout_prob=0.1,
+        attention_probs_dropout_prob=0.1,
+        max_position_embeddings=512,
+        type_vocab_size=16,
+        initializer_range=0.02,
+    ):
         """Constructs BertConfig.
 
         Args:
@@ -102,8 +104,7 @@ class BertConfig(object):
 
 class BERTLayerNorm(nn.Module):
     def __init__(self, config, variance_epsilon=1e-12):
-        """Construct a layernorm module in the TF style (epsilon inside the square root).
-        """
+        """Construct a layernorm module in the TF style (epsilon inside the square root)."""
         super(BERTLayerNorm, self).__init__()
         self.gamma = nn.Parameter(torch.ones(config.hidden_size))
         self.beta = nn.Parameter(torch.zeros(config.hidden_size))
@@ -115,14 +116,19 @@ class BERTLayerNorm(nn.Module):
         x = (x - u) / torch.sqrt(s + self.variance_epsilon)
         return self.gamma * x + self.beta
 
+
 class BERTEmbeddings(nn.Module):
     def __init__(self, config):
         super(BERTEmbeddings, self).__init__()
         """Construct the embedding module from word, position and token_type embeddings.
         """
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size)
-        self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
-        self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+        self.position_embeddings = nn.Embedding(
+            config.max_position_embeddings, config.hidden_size
+        )
+        self.token_type_embeddings = nn.Embedding(
+            config.type_vocab_size, config.hidden_size
+        )
 
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
@@ -131,7 +137,9 @@ class BERTEmbeddings(nn.Module):
 
     def forward(self, input_ids, token_type_ids=None):
         seq_length = input_ids.size(1)
-        position_ids = torch.arange(seq_length, dtype=torch.long, device=input_ids.device)
+        position_ids = torch.arange(
+            seq_length, dtype=torch.long, device=input_ids.device
+        )
         position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
         if token_type_ids is None:
             token_type_ids = torch.zeros_like(input_ids)
@@ -152,7 +160,8 @@ class BERTSelfAttention(nn.Module):
         if config.hidden_size % config.num_attention_heads != 0:
             raise ValueError(
                 "The hidden size (%d) is not a multiple of the number of attention "
-                "heads (%d)" % (config.hidden_size, config.num_attention_heads))
+                "heads (%d)" % (config.hidden_size, config.num_attention_heads)
+            )
         self.num_attention_heads = config.num_attention_heads
         self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
@@ -164,7 +173,10 @@ class BERTSelfAttention(nn.Module):
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
 
     def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
+        new_x_shape = x.size()[:-1] + (
+            self.num_attention_heads,
+            self.attention_head_size,
+        )
         x = x.view(*new_x_shape)
         return x.permute(0, 2, 1, 3)
 
@@ -267,7 +279,9 @@ class BERTEncoder(nn.Module):
     def __init__(self, config):
         super(BERTEncoder, self).__init__()
         layer = BERTLayer(config)
-        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])    
+        self.layer = nn.ModuleList(
+            [copy.deepcopy(layer) for _ in range(config.num_hidden_layers)]
+        )
 
     def forward(self, hidden_states, attention_mask):
         all_encoder_layers = []
@@ -287,7 +301,7 @@ class BERTPooler(nn.Module):
         # We "pool" the model by simply taking the hidden state corresponding
         # to the first token.
         first_token_tensor = hidden_states[:, 0]
-        #return first_token_tensor
+        # return first_token_tensor
         pooled_output = self.dense(first_token_tensor)
         pooled_output = self.activation(pooled_output)
         return pooled_output
@@ -310,6 +324,7 @@ class BertModel(nn.Module):
     all_encoder_layers, pooled_output = model(input_ids, token_type_ids, input_mask)
     ```
     """
+
     def __init__(self, config: BertConfig):
         """Constructor for BertModel.
 
@@ -348,6 +363,7 @@ class BertModel(nn.Module):
         pooled_output = self.pooler(sequence_output)
         return all_encoder_layers, pooled_output
 
+
 class BertForSequenceClassification(nn.Module):
     """BERT model for classification.
     This module is composed of the BERT model with a linear layer on top of
@@ -369,6 +385,7 @@ class BertForSequenceClassification(nn.Module):
     logits = model(input_ids, token_type_ids, input_mask)
     ```
     """
+
     def __init__(self, config, num_labels):
         super(BertForSequenceClassification, self).__init__()
         self.bert = BertModel(config)
@@ -385,6 +402,7 @@ class BertForSequenceClassification(nn.Module):
                 module.gamma.data.normal_(mean=0.0, std=config.initializer_range)
             if isinstance(module, nn.Linear):
                 module.bias.data.zero_()
+
         self.apply(init_weights)
 
     def forward(self, input_ids, token_type_ids, attention_mask, labels=None):
@@ -419,6 +437,7 @@ class BertForQuestionAnswering(nn.Module):
     start_logits, end_logits = model(input_ids, token_type_ids, input_mask)
     ```
     """
+
     def __init__(self, config):
         super(BertForQuestionAnswering, self).__init__()
         self.bert = BertModel(config)
@@ -436,9 +455,17 @@ class BertForQuestionAnswering(nn.Module):
                 module.gamma.data.normal_(mean=0.0, std=config.initializer_range)
             if isinstance(module, nn.Linear):
                 module.bias.data.zero_()
+
         self.apply(init_weights)
 
-    def forward(self, input_ids, token_type_ids, attention_mask, start_positions=None, end_positions=None):
+    def forward(
+        self,
+        input_ids,
+        token_type_ids,
+        attention_mask,
+        start_positions=None,
+        end_positions=None,
+    ):
         all_encoder_layers, _ = self.bert(input_ids, token_type_ids, attention_mask)
         sequence_output = all_encoder_layers[-1]
         logits = self.qa_outputs(sequence_output)
