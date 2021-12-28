@@ -17,7 +17,6 @@ def nlim(
     bert_config_dir: str = os.environ.get('BERT_CONFIG_PATH'),
     max_seq_length: int = int(os.environ.get('MAX_SEQ_LENGTH', '512')),
 ):
-    print("hello")
     predictor = Predictor(bert_config_dir, max_seq_length)
     example = Example(
         main_phrase=main,

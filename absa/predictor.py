@@ -55,9 +55,8 @@ class Predictor:
             logits = model(input_ids, segment_ids, input_mask)
         logits = Functional.softmax(logits, dim=-1)
         logits = logits.detach().cpu().numpy()
-        label_ids = label_ids.to('cpu').numpy()
         outputs = np.argmax(logits, axis=1)
-        return list(outputs)
+        return outputs.tolist()
 
     def _get_model(
         self, model_path: str, label_list: List[str]
