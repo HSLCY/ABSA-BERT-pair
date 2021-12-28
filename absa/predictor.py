@@ -34,14 +34,19 @@ class Predictor:
         predicted_labels: List[str] = []
         for input_ids, input_mask, segment_ids in dataloader:
             label_logits = self._predict_features(
-                model, input_ids, input_mask, segment_ids
+                model, device, input_ids, input_mask, segment_ids
             )
             for logit in label_logits:
                 predicted_labels.append(label_list[logit])
         return predicted_labels
 
     def _predict_features(
-        self, model: BertForSequenceClassification, input_ids, input_mask, segment_ids
+        self,
+        model: BertForSequenceClassification,
+        device: torch.device,
+        input_ids,
+        input_mask,
+        segment_ids,
     ) -> List[int]:
         input_ids = input_ids.to(device)
         input_mask = input_mask.to(device)
