@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, List
+from typing import Any, List, Tuple
 
 import numpy as np
 import torch
@@ -30,7 +30,7 @@ class Predictor:
         # retrieve the features
         features = self.tokenizer.convert_examples(examples)
         dataloader = self._data_loader(features)
-        model = self._get_model(bert_model_path, label_list)
+        model, device = self._get_model(bert_model_path, label_list)
         predicted_labels: List[str] = []
         for input_ids, input_mask, segment_ids in dataloader:
             label_logits = self._predict_features(
@@ -56,7 +56,7 @@ class Predictor:
 
     def _get_model(
         self, model_path: str, label_list: List[str]
-    ) -> BertForSequenceClassification:
+    ) -> Tuple[BertForSequenceClassification, torch.device]:
         # initialize cuda
         device = torch.device("cuda")
         n_gpu = torch.cuda.device_count()
@@ -66,7 +66,7 @@ class Predictor:
         model.load_state_dict(torch.load(model_path, map_location='cpu'))
         model.to(device)
         model = torch.nn.DataParallel(model)
-        return model
+        return model, device
 
     def _data_loader(self, features: List[InputFeatures]) -> DataLoader:
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
