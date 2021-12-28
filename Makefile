@@ -8,5 +8,6 @@ install:
 
 format:
 	pip install black
+	pip install isort
 	black -S .
 	isort absa
