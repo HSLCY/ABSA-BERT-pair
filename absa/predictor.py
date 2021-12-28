@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any
+from typing import Any, List
 
 import numpy as np
 import torch
@@ -30,7 +30,7 @@ class Predictor:
         # initialize cuda
         device = torch.device("cuda")
         n_gpu = torch.cuda.device_count()
-        logger.info(f'Found device: {device}. Number of GPUs: {n_gpu}')
+        self.logger.info(f'Found device: {device}. Number of GPUs: {n_gpu}')
         # retrieve the features
         features = self.tokenizer.convert_examples(examples)
         dataloader = self._data_loader(features)
@@ -62,7 +62,7 @@ class Predictor:
         self, model_path: str, label_list: List[str]
     ) -> BertForSequenceClassification:
         # model and optimizer
-        model = BertForSequenceClassification(bert_config, len(label_list))
+        model = BertForSequenceClassification(self.bert_config, len(label_list))
         model.load_state_dict(torch.load(model_path, map_location='cpu'))
         model.to(device)
         model = torch.nn.DataParallel(model)
@@ -76,11 +76,10 @@ class Predictor:
         all_segment_ids = torch.tensor(
             [f.segment_ids for f in features], dtype=torch.long
         )
-        all_label_ids = torch.tensor([f.label_id for f in features], dtype=torch.long)
         test_data = TensorDataset(
-            all_input_ids, all_input_mask, all_segment_ids, all_label_ids
+            all_input_ids, all_input_mask, all_segment_ids,
         )
         test_dataloader = DataLoader(
-            test_data, batch_size=args.eval_batch_size, shuffle=False
+            test_data, batch_size=1, shuffle=False
         )
         return test_dataloader

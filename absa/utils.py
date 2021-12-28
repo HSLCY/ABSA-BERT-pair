@@ -31,7 +31,7 @@ class Tokenizer:
         if example.second_phrase:
             tokens_b = self.tokenizer.tokenize(example.second_phrase)
         if tokens_b:
-            _truncate_seq_pair(tokens_a, tokens_b, self.max_seq_length - 3)
+            self._truncate_seq_pair(tokens_a, tokens_b, self.max_seq_length - 3)
         else:
             if len(tokens_a) > self.max_seq_length - 2:
                 tokens_a = tokens_a[0 : (self.max_seq_length - 2)]
@@ -58,13 +58,13 @@ class Tokenizer:
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
         input_mask = [1] * len(input_ids)
         # Zero-pad up to the sequence length.
-        while len(input_ids) < max_seq_length:
+        while len(input_ids) < self.max_seq_length:
             input_ids.append(0)
             input_mask.append(0)
             segment_ids.append(0)
-        assert len(input_ids) == max_seq_length
-        assert len(input_mask) == max_seq_length
-        assert len(segment_ids) == max_seq_length
+        assert len(input_ids) == self.max_seq_length
+        assert len(input_mask) == self.max_seq_length
+        assert len(segment_ids) == self.max_seq_length
         return InputFeatures(
             input_ids=input_ids,
             input_mask=input_mask,
