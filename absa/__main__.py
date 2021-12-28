@@ -28,6 +28,6 @@ def nlim(
     )
     print(f'Sentiment: {labels[0]}')
 
+
 if __name__ == '__main__':
     app()
-

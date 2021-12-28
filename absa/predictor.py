@@ -27,10 +27,6 @@ class Predictor:
     def predict(
         self, bert_model_path: str, label_list: List[str], examples: List[Example]
     ) -> List[str]:
-        # initialize cuda
-        device = torch.device("cuda")
-        n_gpu = torch.cuda.device_count()
-        self.logger.info(f'Found device: {device}. Number of GPUs: {n_gpu}')
         # retrieve the features
         features = self.tokenizer.convert_examples(examples)
         dataloader = self._data_loader(features)
@@ -61,6 +57,10 @@ class Predictor:
     def _get_model(
         self, model_path: str, label_list: List[str]
     ) -> BertForSequenceClassification:
+        # initialize cuda
+        device = torch.device("cuda")
+        n_gpu = torch.cuda.device_count()
+        self.logger.info(f'Found device: {device}. Number of GPUs: {n_gpu}')
         # model and optimizer
         model = BertForSequenceClassification(self.bert_config, len(label_list))
         model.load_state_dict(torch.load(model_path, map_location='cpu'))
@@ -77,9 +77,9 @@ class Predictor:
             [f.segment_ids for f in features], dtype=torch.long
         )
         test_data = TensorDataset(
-            all_input_ids, all_input_mask, all_segment_ids,
+            all_input_ids,
+            all_input_mask,
+            all_segment_ids,
         )
-        test_dataloader = DataLoader(
-            test_data, batch_size=1, shuffle=False
-        )
+        test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False)
         return test_dataloader
