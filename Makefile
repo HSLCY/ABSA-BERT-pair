@@ -9,3 +9,4 @@ install:
 format:
 	pip install black
 	black -S .
+	isort absa
