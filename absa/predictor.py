@@ -55,15 +55,14 @@ class Predictor:
             logits = model(input_ids, segment_ids, input_mask)
         logits = Functional.softmax(logits, dim=-1)
         logits = logits.detach().cpu().numpy()
-        label_ids = label_ids.to('cpu').numpy()
         outputs = np.argmax(logits, axis=1)
-        return list(outputs)
+        return outputs.tolist()
 
     def _get_model(
         self, model_path: str, label_list: List[str]
     ) -> Tuple[BertForSequenceClassification, torch.device]:
         # initialize cuda
-        device = torch.device("cuda")
+        device = torch.device("cpu")
         n_gpu = torch.cuda.device_count()
         self.logger.info(f'Found device: {device}. Number of GPUs: {n_gpu}')
         # model and optimizer
